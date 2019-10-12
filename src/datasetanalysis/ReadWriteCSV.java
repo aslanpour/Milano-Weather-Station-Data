@@ -19,17 +19,32 @@ import java.util.ArrayList;
  */
 public class ReadWriteCSV {
    
-    private static String FILE_PATH = "src/files/mi_meteo_2001.csv";
-
     /**
      * 
      * @param args 
      */
     public static void main(String[] args) throws IOException {
+        ArrayList dataset = readCSV("src/files/new.csv", true);
+        pickAnItemList(dataset, 4);//get temprature
+        
+    }
+    
+    public static double[] pickAnItemList(ArrayList dataList, int index){
+        double[] itemList = new double[dataList.size()];
+        
+        for(int i = 0; i < dataList.size();i++){
+            ArrayList<Double> row = (ArrayList<Double>)dataList.get(i);
+            itemList[i] = row.get(index);
+        }
+        
+        return itemList;
+    }
+    
+    public static void preprocess_mi_meteo_2001(String file) throws IOException{
         ArrayList dataList = new ArrayList<>();
         BufferedReader csvReader;
         try {
-            csvReader = new BufferedReader(new FileReader(FILE_PATH));
+            csvReader = new BufferedReader(new FileReader(file));
             try {
                 String line;
                 
@@ -91,5 +106,36 @@ public class ReadWriteCSV {
         
         csvWriter.flush();
         csvWriter.close();
+    }
+    public static ArrayList readCSV(String file, boolean labeled){
+        ArrayList dataList = new ArrayList<>();
+        BufferedReader csvReader;
+        try {
+            csvReader = new BufferedReader(new FileReader(file));
+            try {
+                String line;
+                if (labeled)
+                    csvReader.readLine();
+                while ( (line = csvReader.readLine()) != null ) {
+                    String[] rowStr = line.split(",");
+                    
+                    ArrayList<Double> row = new ArrayList<Double>();
+                    for (int i =0; i < rowStr.length;i++){
+                        row.add(Double.valueOf(rowStr[i]));
+                    }
+                    
+                    dataList.add(row);
+                } 
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println(e);
+            e.printStackTrace(); 
+        }
+        
+        return dataList;
+
     }
 }
