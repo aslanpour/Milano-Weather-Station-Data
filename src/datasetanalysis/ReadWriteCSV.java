@@ -5,6 +5,7 @@
  */
 package datasetanalysis;
 
+import java.awt.List;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -36,7 +37,7 @@ public class ReadWriteCSV {
                     String[] items = line.split(",");
                     
                     //Modify the read data
-                    ArrayList newRow = new ArrayList();
+                    double[] newRow = new double[5];
                     double year =0, month =0, day =0, hour = 0, temprature = 0;
                     
                     String[] dateSplitted = items[1].split("/");
@@ -49,11 +50,11 @@ public class ReadWriteCSV {
                     hour = Double.valueOf(dateSplitted[2].substring(4, 6).trim());
                             
                     temprature = Double.valueOf(items[2]);
-                    newRow.add(year);
-                    newRow.add(month);
-                    newRow.add(day);
-                    newRow.add(hour);
-                    newRow.add(temprature);
+                    newRow[0] = year;
+                    newRow[1] = month;
+                    newRow [2] = day;
+                    newRow [3] = hour;
+                    newRow [4] = temprature;
                     
                     dataList.add(newRow);
                 } 
@@ -62,15 +63,33 @@ public class ReadWriteCSV {
             }
         } catch (FileNotFoundException e) {
             System.out.println(e);
-            e.printStackTrace();
+            e.printStackTrace(); 
         }
         
         
         //Write
-        FileWriter csvWriter = new FileWriter("new.csv");
-        foe () {
-            Object nextElement = en.nextElement();
-            
+        FileWriter csvWriter = new FileWriter("src/files/new.csv");
+        csvWriter.append("Year");
+        csvWriter.append(",");
+        csvWriter.append("Month");
+        csvWriter.append(",");
+        csvWriter.append("Day");
+        csvWriter.append(",");
+        csvWriter.append("Hour");
+        csvWriter.append(",");
+        csvWriter.append("Temperature");
+        csvWriter.append("\n");
+        
+        for (int i = 0; i < dataList.size(); i++) {
+           double[] row = (double[])dataList.get(i);
+           csvWriter.append(row[0] + ",");
+           csvWriter.append(row[1] + ",");
+           csvWriter.append(row[2] + ",");
+           csvWriter.append(row[3] + ",");
+           csvWriter.append(row[4] + "\n");
         }
+        
+        csvWriter.flush();
+        csvWriter.close();
     }
 }
