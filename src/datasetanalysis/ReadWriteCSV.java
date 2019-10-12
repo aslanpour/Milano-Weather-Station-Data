@@ -8,6 +8,7 @@ package datasetanalysis;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -23,14 +24,14 @@ public class ReadWriteCSV {
      * 
      * @param args 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         ArrayList dataList = new ArrayList<>();
         BufferedReader csvReader;
         try {
             csvReader = new BufferedReader(new FileReader(FILE_PATH));
             try {
                 String line;
-                int i=0;
+                
                 while ( (line = csvReader.readLine()) != null ) {
                     String[] items = line.split(",");
                     
@@ -53,9 +54,7 @@ public class ReadWriteCSV {
                     newRow.add(day);
                     newRow.add(hour);
                     newRow.add(temprature);
-                    i++;
-                    if (i==410)
-                        i=402;
+                    
                     dataList.add(newRow);
                 } 
             } catch (IOException e) {
@@ -64,6 +63,14 @@ public class ReadWriteCSV {
         } catch (FileNotFoundException e) {
             System.out.println(e);
             e.printStackTrace();
+        }
+        
+        
+        //Write
+        FileWriter csvWriter = new FileWriter("new.csv");
+        foe () {
+            Object nextElement = en.nextElement();
+            
         }
     }
 }
