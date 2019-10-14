@@ -17,6 +17,7 @@ import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.correlation.Covariance;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
 
 /**
  *
@@ -32,11 +33,33 @@ public class ReadWriteCSV {
     public static final String FILE_PATH = "src/files/";
     
     public static void main(String[] args) throws IOException {
-        String fileName = "mi_meteo_2002.csv";
-        // Timestamp in mi_meteo_2001 (temperature) is in "MM/DD/YYYY HH:MM" format
-        // in mi_meteo_2002 (humidity) is in "YYYY/MM/DD HH:MM".
-        String dateFormat = "YYYY/MM/DD HH:MM";
-        preprocessing(fileName, dateFormat);
+        // Step 1: preprocessing the data
+        
+        String fileNameTemperature = "mi_meteo_2001.csv";
+        String fileNameHumidity = "mi_meteo_2002.csv";
+       
+        String dateFormatTemperature = "MM/DD/YYYY HH:MM";
+        String dateFormatHumidity = "YYYY/MM/DD HH:MM";
+       
+        preprocessing(fileNameTemperature, dateFormatTemperature);
+        preprocessing(fileNameHumidity, dateFormatHumidity);
+        
+        
+        //Step 2: Read both preprocessed datasets
+        //fields: 0:Key, 1:Year, 2:Month, 3:Day, 4:Hour, 5:Target Parameter
+        String fileName_Temperature = "preprocessed_mi_meteo_2001.csv";
+        String fileName_Humidity = "preprocessed_mi_meteo_2002.csv";
+        ArrayList temperatureDataSet = readCSV(fileName_Temperature, false);
+        ArrayList humidityDataSet = readCSV(fileName_Humidity, false);
+        
+        // Step 3:  Descriptive Statistics
+        double[] temperature = pickAnItemList(temperatureDataSet, 5);
+        double[] humidity = pickAnItemList(humidityDataSet, 5);
+        descriptiveStatistics(temperature, "Temperature");
+        descriptiveStatistics(humidity, "Humidity");
+        
+        // Step 4: Inferrential Statistics
+        inferentialStatistics(temperature, humidity);
     }
     
     
@@ -157,7 +180,7 @@ public class ReadWriteCSV {
         return dataListWithKey;
     }
     
-    public static void descriptiveStatistics(double[] values){
+    public static void descriptiveStatistics(double[] values, String parameterName){
         DescriptiveStatistics descriptiveStat = new DescriptiveStatistics(values);
         double count = values.length;
         double sum = descriptiveStat.getSum();
@@ -173,7 +196,8 @@ public class ReadWriteCSV {
         
         
         
-        System.out.println("Count: " + count +
+        System.out.println(parameterName + "\n" +
+                            "Count: " + count +
                             "\nSum: " + sum + 
                             "\nMin: " + min + 
                             "\nMax: " + max + 
@@ -187,8 +211,19 @@ public class ReadWriteCSV {
     }
         
     
-    public static void correlation(double[] x, double[] y){
+    public static void inferentialStatistics(double[] x, double[] y){
+        Covariance covariance = new Covariance();
+        PearsonsCorrelation pearsonsCorrelation = new PearsonsCorrelation();
+        SpearmansCorrelation spearmansCorrelation = new SpearmansCorrelation();
         
+        double covarianceDbl = covariance.covariance(x, y);
+        double pearsonsCorrelationDbl = pearsonsCorrelation.correlation(x, y);
+        double spearmansCorrelationDbl = spearmansCorrelation.correlation(x, y);
+        
+        System.out.println("\n" + "Inferential Statistics:" +
+                            "\nCovariance: " + covarianceDbl + 
+                            "\nPearsonsCorrelation: " + pearsonsCorrelationDbl +
+                            "\nSpearmansCorrelation: " + spearmansCorrelationDbl);
     }
     
     public static ArrayList timeStampFixing_mi_meteo_dataset(String filePath, 
@@ -264,7 +299,7 @@ public class ReadWriteCSV {
         ArrayList dataList = new ArrayList<>();
         BufferedReader csvReader;
         try {
-            csvReader = new BufferedReader(new FileReader(file));
+            csvReader = new BufferedReader(new FileReader(FILE_PATH + file));
             try {
                 String line;
                 if (labeled)
@@ -293,7 +328,7 @@ public class ReadWriteCSV {
     }
     
     public static void writeCSV(double[] data, String fileName) throws IOException{
-        FileWriter csvWriter = new FileWriter(fileName);
+        FileWriter csvWriter = new FileWriter(FILE_PATH + fileName);
                 
         for (int i = 0; i < data.length; i++) {
            csvWriter.append(data[i] + "\n");
@@ -323,7 +358,7 @@ public class ReadWriteCSV {
     }
     
     public static void writeCSV(double[] data, String fileName, String lable) throws IOException{
-        FileWriter csvWriter = new FileWriter(fileName);
+        FileWriter csvWriter = new FileWriter(FILE_PATH + fileName);
         csvWriter.append(lable + "\n");
         
         for (int i = 0; i < data.length; i++) {
