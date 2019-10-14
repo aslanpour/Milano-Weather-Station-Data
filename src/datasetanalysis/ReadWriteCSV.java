@@ -18,6 +18,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.correlation.Covariance;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 /**
  *
@@ -60,6 +61,10 @@ public class ReadWriteCSV {
         
         // Step 4: Inferrential Statistics
         inferentialStatistics(temperature, humidity);
+        
+        // Step 5: Macine Learning
+        regression(temperature, humidity);
+        
     }
     
     
@@ -226,6 +231,16 @@ public class ReadWriteCSV {
                             "\nSpearmansCorrelation: " + spearmansCorrelationDbl);
     }
     
+    public static void regression (double[] x, double[] y){
+        SimpleRegression simpleRegression = new SimpleRegression();
+        for (int i =0; i < x.length; i++){
+            simpleRegression.addData(x[i], y[i]);
+        }
+        
+        double rSquare = simpleRegression.getRSquare();
+        System.out.println("Regression: \n"
+                            + "RSquare: " + rSquare);
+    }
     public static ArrayList timeStampFixing_mi_meteo_dataset(String filePath, 
                                                         String fileName, 
                                                         String dateFormat) throws IOException{
