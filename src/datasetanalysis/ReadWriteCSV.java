@@ -19,6 +19,9 @@ import org.apache.commons.math3.stat.correlation.Covariance;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
+import org.neuroph.core.data.DataSet;
+import org.neuroph.core.data.DataSetRow;
 
 /**
  *
@@ -62,8 +65,11 @@ public class ReadWriteCSV {
         // Step 4: Inferrential Statistics
         inferentialStatistics(temperature, humidity);
         
-        // Step 5: Macine Learning
+        // Step 5: Regression
         regression(temperature, humidity);
+        
+        // Step 6: Machine Learning
+        
         
     }
     
@@ -237,9 +243,18 @@ public class ReadWriteCSV {
             simpleRegression.addData(x[i], y[i]);
         }
         
+        double yIntercept = simpleRegression.getIntercept();
+        double slope = simpleRegression.getSlope();
         double rSquare = simpleRegression.getRSquare();
-        System.out.println("Regression: \n"
-                            + "RSquare: " + rSquare);
+        System.out.println("Regression: \n" + 
+                            "Y-Intercep: " + yIntercept + 
+                            "\nSlope: " + slope + 
+                            "\nRSquare: " + rSquare);
+    }
+    
+    public static void machineLearning (ArrayList dataSetTemperature, ArrayList dataSetHumidity){
+       // Merge the temperature and humidity files
+       
     }
     public static ArrayList timeStampFixing_mi_meteo_dataset(String filePath, 
                                                         String fileName, 

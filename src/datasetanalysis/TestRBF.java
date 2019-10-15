@@ -3,7 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package datasetanalysis.filemanipulating;
+package datasetanalysis;
+import datasetanalysis.filemanipulating.*;
+import static datasetanalysis.filemanipulating.DataSetCreator.createSupervizedDataSetNormalized;
 import java.io.InputStream;
 import org.neuroph.core.NeuralNetwork;
 import org.neuroph.core.data.DataSet;
@@ -33,22 +35,228 @@ import org.neuroph.core.transfer.Linear;
 import org.neuroph.core.transfer.Sigmoid;
 import org.neuroph.util.Neuroph;
 import org.neuroph.core.Layer;
-
+import org.neuroph.util.random.NguyenWidrowRandomizer;
 /**
  *
  * @author Sadegh Aslanpour
  */
 public class TestRBF {
-    public static void main(String[] args) {
-        String trainDatasetPath = "D:/Dropbox/Workflow Paper/Workload Prediction/trainDS_d3456-10min-predictF-1H.tset";
-        String testDatasetPath = "D:/Dropbox/Workflow Paper/Workload Prediction/testDS_d7-10min-predictF-1H.tset";
-//        trainSaveTestReport(trainDatasetPath, testDatasetPath);
-        test(testDatasetPath);
-//        exampleCreateNeuralNetwork();
-//        exampleTrainNeuralNetwork();
-//        exampleTestNeuralNetwork();
-    }
     
+    public TestRBF(ArrayList temperatureDataList, ArrayList humidityDataList){
+        //Merge files and remove unnecesssary fields like key and year
+        //input is : month [11,12], day [1, 31], hour [0, 23], and temperature [-3.6, 20.4]
+        //output is humidity[15, 96]
+        double [][] inputTrain = new double[1170][4]; // 1170 equals 80% of the data
+        double [] outputTrain = new double[1170];
+        
+        double [][] inputTest = new double [temperatureDataList.size() - 1170][4];
+        double [] outputTest = new double [temperatureDataList.size() - 1170];
+        
+        DataSet trainSet = new DataSet(4, 1); // 4 inputs and 1 output
+        DataSet testSet = new DataSet(4, 1); // 4 inputs and 1 output
+
+                
+        for (int i = 0; i < temperatureDataList.size(); i++){
+            // Temperature row: 0:Key, 1: Year, 2: Month, 3:Day, 4: Hour, 5: Temperature
+            ArrayList<Double> rowTemperature = (ArrayList<Double>)temperatureDataList.get(i);
+            //Humidity row: 0:Key, 1: Year, 2: Month, 3:Day, 4: Hour, 5: Humidity
+            ArrayList<Double> rowHumidity = (ArrayList<Double>)humidityDataList.get(i);
+            
+            if (i < 1170){ // fill in train set
+                inputTrain[i][0] = normalizedValue(rowTemperature.get(2), 11, 12); // month
+                inputTrain[i][1] = normalizedValue(rowTemperature.get(3), 1, 31); // day
+                inputTrain[i][2] = normalizedValue(rowTemperature.get(4), 0, 23); //hour
+                inputTrain[i][3] = normalizedValue(rowTemperature.get(5), -4, 21); // temperature
+                
+                outputTrain[i] = normalizedValue(rowHumidity.get(5),0, 100); // humidity
+                
+                // Add normalized values to train dataset
+                
+                DataSetRow dataSetRow = new DataSetRow(inputTrain[i], outputTrain);
+                trainSet.addRow(dataSetRow);
+                        
+            }else{ // fill in test set
+                inputTrain[i][0] = normalizedValue(rowTemperature.get(2), 11, 12); // month
+                inputTrain[i][1] = normalizedValue(rowTemperature.get(3), 1, 31); // day
+                inputTrain[i][2] = normalizedValue(rowTemperature.get(4), 0, 23); //hour
+                inputTrain[i][3] = normalizedValue(rowTemperature.get(5), -4, 21); // temperature
+                
+                outputTrain[i] = normalizedValue(rowHumidity.get(5),0, 100); // humidity
+                
+                // Add normalized values to train dataset
+                DataSetRow dataSetRow = new DataSetRow(inputTest[i], outputTest);
+                testSet.addRow(dataSetRow);
+            }
+        }
+        
+        // Save DataSets
+        trainSet.save("src/files/trainSet.tset");
+        testSet.save("src/files/testSet.tset");
+        
+        // Configure the Neural Networks
+        ArrayList networkList = new ArrayList<Double>();
+        int networkNo = 1;
+        int failedNetwork = 0; // error = NAN
+        
+        int inputs = 4;  // C
+        int outputs = 1;   // D
+        
+        int rbfNeuronCountBegin = 2; // E
+        int rbfNeuronCountEnd = 10;   // F
+        
+        double learningRateBegin = 0.1; // G
+        double learningRateEnd = 0.6;  // H
+        
+        int maxIterateStart = 100;  // I
+        int maxIterateEnd = 2000; // J
+        
+        boolean avoidDivideByZeroByOne = true; // k
+        
+        InputFunction inputFunction = new WeightedSum(); // K      /* For Output Layer */
+        TransferFunction transferFunction = new Sigmoid(); // L    /* For Output Layer */
+        
+        
+        //Stress the networks
+        for (int rbfNeuronCount = rbfNeuronCountBegin; rbfNeuronCount <= rbfNeuronCountEnd; rbfNeuronCount++){ 
+            for(double learningRate = learningRateBegin; learningRate <= learningRateEnd; learningRate += 0.1){ 
+                for(int maxIterate = maxIterateStart; maxIterate <= maxIterateEnd; maxIterate+= 100){ 
+                    ArrayList<Double> networkInfo = new ArrayList<>();
+                    // Create a Network
+                    NeuralNetwork neuralNetwork = new RBFNetwork(inputs, rbfNeuronCount, outputs);
+
+                    // Set more efficient functions for output layer
+                    for(int i = 0; i < neuralNetwork.getOutputNeurons().size(); i++){
+                        neuralNetwork.getLayerAt(neuralNetwork.getLayersCount() - 1)
+                                                            .getNeuronAt(i).setInputFunction(inputFunction);
+                        neuralNetwork.getLayerAt(neuralNetwork.getLayersCount() - 1)
+                                                            .getNeuronAt(i).setTransferFunction(transferFunction);
+                    }
+                    
+                    // Set Learning Parameters
+                    RBFLearning learningRule = new RBFLearning();
+                    learningRule.setLearningRate(learningRate);
+                    learningRule.setMaxError(0.0);
+                    learningRule.setMaxIterations(maxIterate);
+                    learningRule.setNeuralNetwork(neuralNetwork);
+                    neuralNetwork.setLearningRule(learningRule);
+                    
+                    // Training
+//                    RangeRandomizer NquyenWidrowRandomizer = new NguyenWidrowRandomizer(-0.5, 0.5);
+                    neuralNetwork.randomizeWeights(-0.5, 0.5);
+
+                    System.out.println("Neural Network is Learning . . .");
+
+                    neuralNetwork.learnInSameThread(trainSet);
+
+                    Log.printLine(" Neural Network Learned");
+                                    
+                    Log.printLine("**************************");
+                    Log.printLine("Network No. " + networkNo + "-");
+                    Log.printLine("RBF Neuron Count = " + rbfNeuronCount);
+                    Log.printLine("Learning Rule = " + neuralNetwork.getLearningRule().toString());
+                    Log.printLine("     Learning Rate = " + learningRate);
+                    Log.printLine("     Max Iterate = " + maxIterate);
+                    double totalError = ((RBFLearning)neuralNetwork.getLearningRule()).getTotalNetworkError();
+                    Log.printLine("Total Error (train) =" + totalError);
+                    Log.printLine("..................................");
+                    
+                    if(Double.isNaN(totalError)){
+                        failedNetwork++;
+                        break;
+                    }
+                    
+                    // save network
+                    String netPath = "D:/Dropbox/Workflow Paper/Workload Prediction/NeuralNetworks/RBF"
+                                                 + "/RBF_In" + inputValues 
+                                                 + "_H" + rbfNeuronCount 
+                                                 + "_Out" + outputValues
+                                                 + "_LR" + learningRate 
+                                                 + "_Iter" + maxIterate + ".nnet";
+                    
+                    neuralNetwork.save(netPath);
+                     // Test Phase
+                    Log.printLine(networkNo + " Neural Network (" + networkNo +")" + " is Testing . . .");
+                            
+                    double sumAE = 0; double sumSE = 0; double sumAPE = 0; double sumPRED = 0;
+
+                    for(DataSetRow dataSetRow: testDataSet.getRows()){
+                        
+                        neuralNetwork.setInput(dataSetRow.getInput());
+                        // Test
+                        neuralNetwork.calculate();
+
+                        //desire output (from test set)
+                        double sumDesireOutput = 0; double sumPredictedOutput = 0;
+                        double error = 0; double aE = 0; double aPE = 0; double sE = 0;
+                        ArrayList<Double> data = new ArrayList<>();
+                        
+                        for(double desireOutPut: dataSetRow.getDesiredOutput()){
+                            
+                            double value = MLP.deNormalizedValue(desireOutPut, minRequests, maxRequests);
+                            sumDesireOutput += value;
+//                                data.add(value);
+                        }
+                        
+                        if(sumDesireOutput == 0 && avoidDivideByZeroByOne)
+                            sumDesireOutput = 1;
+                        else
+                            sumDesireOutput /= outputValues;
+                        
+                        //predicted output
+                        for(int i = 0; i < neuralNetwork.getOutputsCount(); i++){
+                            double value = MLP.deNormalizedValue(neuralNetwork.getOutput()[i], minRequests, maxRequests);
+                            sumPredictedOutput += value;
+//                                data.add(value);
+                        }
+                        sumPredictedOutput /= outputValues;
+
+                        // calculate error metrics
+                        error = sumDesireOutput - sumPredictedOutput;
+                        aE = Math.abs(error);  // Absolute Error
+                        aPE = aE / sumDesireOutput; // Absolute Percentale Error ??
+                        sE = error * error;//pow 2 // Square Error
+
+                        if(aE <= ((sumDesireOutput * 25) / 100)){
+                            sumPRED++; // 1
+                        }
+                        sumAE += aE; // 2
+                        sumSE +=sE; // 3
+                        sumAPE +=aPE; // 4
+
+//                            dataList.add(data);
+                    }
+
+                    double pRED = sumPRED / testDataSet.getRows().size(); // 1
+                    double mAE = sumAE / testDataSet.getRows().size(); // 2
+                    double rMSE = Math.sqrt(sumSE / testDataSet.getRows().size()); // 3
+                    double mAPE = sumAPE / testDataSet.getRows().size(); // 4
+                    Log.printLine("Total Error = " + totalError);
+                    Log.printLine("MAE = " + mAE);
+                    Log.printLine("RMSE = " + rMSE);
+                    Log.printLine("MAPE = " + mAPE);
+                    Log.printLine("PRED(25) = " + pRED);
+                    
+                    // Save neural network info and its error metrics 
+                    networkInfo.add((double)rbfNeuronCount);
+                    networkInfo.add(learningRate);
+                    networkInfo.add((double)maxIterate);
+                    
+                    networkInfo.add(totalError);
+                    networkInfo.add(mAE);
+                    networkInfo.add(rMSE);
+                    networkInfo.add(mAPE);
+                    networkInfo.add(pRED);
+                            
+                    networkList.add(networkInfo);
+                            
+                    networkNo++;
+                }
+            }
+            
+        }
+        // Write to Excel
+        Log.printLine("Failde Network = " + failedNetwork);
+    }
     public static void trainTestReport( String trainSetPath, String testSetPath){
          ArrayList networkList = new ArrayList<Double>();
         int networkNo = 1;
@@ -204,7 +412,7 @@ public class TestRBF {
     }
     
     public static void trainSaveTestReport( String trainSetPath, String testSetPath){
-         ArrayList networkList = new ArrayList<Double>();
+        ArrayList networkList = new ArrayList<Double>();
         int networkNo = 1;
         int failedNetwork = 0; // error = NAN
         
@@ -539,150 +747,5 @@ public class TestRBF {
             return (input - 0.1) * ( maxInput - minInput) / 0.8 + minInput;
     }
     
-    public static void exampleCreateNeuralNetwork(){
-    /*(1) Create Neural Network */
-        // Set Neural Network Configuration 
-        int neuronInInputLayer = 4;    // input neurons
-        int neuronsInRBFLayer = 8;     // rbf neurons
-        int neuronInOutputLayer = 6;   // output neurons
-        
-        // Create a Network object based on defined configuration
-        NeuralNetwork myNeuralNetwork = new RBFNetwork(neuronInInputLayer, neuronsInRBFLayer, neuronInOutputLayer);
-        
-        // Save Neural Network in Hard disk
-        String netPath = "C:/AutoScaleSimFiles/myNeuralNetwork.nnet";
-        myNeuralNetwork.save(netPath);
-        Log.printLine("My Neural Network created in: ");
-        Log.printLine(Const.oneTab + netPath);
-        Log.printLine("Configuration is: ");
-        Log.printLine("Input Neurons: "         + myNeuralNetwork.getInputsCount() 
-                    + " Hidden(RBF) Neurons: " + myNeuralNetwork.getLayerAt(1).getNeuronsCount()
-                    + " Output Neurons: "       + myNeuralNetwork.getLayerAt(2).getNeuronsCount());
-        
-    }
     
-    /**
-     * 
-     */
-    public static void exampleTrainNeuralNetwork(){
-    /*(2)Load my neural network */
-        String netPath = "C:/AutoScaleSimFiles/myNeuralNetwork.nnet";
-        NeuralNetwork myNeuralNetwork = NeuralNetwork.createFromFile(netPath);
-        // Learning Rule */
-            // Set Learning Parameters
-        RBFLearning learningRule = new RBFLearning(); // create a learning objcet
-        
-        learningRule.setLearningRate(0.2);  // between 0 to 1
-        learningRule.setMaxError(0.0);  // the learning phase would stop if max error in each epoch reach this value
-        learningRule.setMaxIterations(100); // the learning phase would stop if max iterations (epoch) reach this value
-        // Apply learning rule to my neural network
-        learningRule.setNeuralNetwork(myNeuralNetwork);
-        myNeuralNetwork.setLearningRule(learningRule);
-
-        // Training */
-            // Training (the goal of training a neural network is that we want to set the weights
-                    // There is a weight parameter Between every related neuron.
-        
-        // Load train dataset
-        Log.printLine("Train Set is Loading . . .");
-        String trainSetPath = "C:/AutoScaleSimFiles/trainSet10Min_345.tset";
-        DataSet trainSet = DataSet.load(trainSetPath); 
-        // Set primary weights
-        RangeRandomizer NquyenWidrowRandomizer = new NguyenWidrowRandomizer(-0.5, 0.5);
-        myNeuralNetwork.randomizeWeights(NquyenWidrowRandomizer);
-
-        // Start training
-        myNeuralNetwork.learn(trainSet);
-
-        Log.printLine("Neural Network is Trained");
-
-        // Save Neural Network in Hard disk
-        myNeuralNetwork.save(netPath);
-        
-        // Print Logs */
-        Log.printLine("**************************");
-        Log.printLine("RBF Configuration = "
-                + "Input Neurons: "         + myNeuralNetwork.getInputsCount() 
-                + " Hidden(RBF) Neurons: " + myNeuralNetwork.getLayerAt(1).getNeuronsCount()
-                + " Output Neurons: "       + myNeuralNetwork.getLayerAt(2).getNeuronsCount());
-        
-        Log.printLine("Learning Rule = " + myNeuralNetwork.getLearningRule().toString());
-        Log.printLine("     Learning Rate = " + ((RBFLearning)myNeuralNetwork.getLearningRule()).getLearningRate());
-        Log.printLine("     Max Iterate = " + ((RBFLearning)myNeuralNetwork.getLearningRule()).getMaxIterations());
-        Log.printLine("Total Error (train) =" + ((RBFLearning)myNeuralNetwork.getLearningRule()).getTotalNetworkError());
-
-    }
-    
-    public static void exampleTestNeuralNetwork(){
-    /*(3) Load my neural network */
-        String netPath = "C:/AutoScaleSimFiles/myNeuralNetwork.nnet";
-        NeuralNetwork myNeuralNetwork = NeuralNetwork.createFromFile(netPath);
-        // Load test file */
-        Log.printLine("Test set is Loading . . .");
-        // Load dataset file in ordet to test my neural network
-        String testSetPath = "C:/AutoScaleSimFiles/testSet10Min_6.tset";
-        DataSet testDataSet = DataSet.load(testSetPath);
-        
-        // Test 
-        // some parameters for error calculation in prediction
-        double sumAE = 0; double sumSE = 0; double sumAPE = 0; double sumPRED = 0;
-        // Test neural network accuarancy by data set
-        // Each Row in dataset contains input series and desire output series:
-        // Input series are actual inputs (day of week, hour of day, minute of hour, and arrived user requests)
-        // Desire output series are actual values (arrival user requests in 10, 20, 30, 40, 50, and 60 minutes later)
-        //
-        for(DataSetRow dataSetRow: testDataSet.getRows()){
-            // assign values to input neuron of neural network
-            myNeuralNetwork.setInput(dataSetRow.getInput());
-            // prediction future user requests
-            myNeuralNetwork.calculate();
-
-            //desire output (from test set)
-            double sumDesireOutput = 0; double sumPredictedOutput = 0;
-            double error = 0; double aE = 0; double aPE = 0; double sE = 0;
-
-            // error calculation
-            // sum desire (actual) outputs
-            for(double desireOutPut: dataSetRow.getDesiredOutput()){
-                sumDesireOutput += desireOutPut;
-            }
-
-            if(sumDesireOutput == 0)
-                sumDesireOutput = 1;
-            else
-                sumDesireOutput /= dataSetRow.getDesiredOutput().length;
-
-            //some predicted outputs
-            for(int i = 0; i < myNeuralNetwork.getOutputsCount(); i++){
-                sumPredictedOutput += myNeuralNetwork.getOutput()[i];
-            }
-            sumPredictedOutput /= myNeuralNetwork.getLayerAt(2).getNeuronsCount();
-
-            // calculate error metrics
-            error = sumDesireOutput - sumPredictedOutput;
-            aE = Math.abs(error);  // Absolute Error
-            aPE = aE / sumDesireOutput; // Absolute Percentale Error ??
-            sE = error * error;//pow 2 // Square Error
-
-            if(aE <= ((sumDesireOutput * 25) / 100)){
-                sumPRED++; // 1
-            }
-            sumAE += aE; // 2
-            sumSE +=sE; // 3
-            sumAPE +=aPE; // 4
-        }
-
-        double pRED = sumPRED / testDataSet.getRows().size(); // 1
-        double mAE = sumAE / testDataSet.getRows().size(); // 2
-        double rMSE = Math.sqrt(sumSE / testDataSet.getRows().size()); // 3
-        double mAPE = sumAPE / testDataSet.getRows().size(); // 4
-        
-        Log.printLine("Neural Network is Trained");
-        
-        Log.printLine("Total Error = " + ((RBFLearning)myNeuralNetwork.getLearningRule()).getTotalNetworkError());
-        Log.printLine("MAE = " + mAE);
-        Log.printLine("RMSE = " + rMSE);
-        Log.printLine("MAPE = " + mAPE);
-        Log.printLine("PRED(25) = " + pRED);
-    }
 }
