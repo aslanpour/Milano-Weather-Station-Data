@@ -45,8 +45,8 @@ public class ReadWriteCSV {
         String dateFormatTemperature = "MM/DD/YYYY HH:MM";
         String dateFormatHumidity = "YYYY/MM/DD HH:MM";
        
-        preprocessing(fileNameTemperature, dateFormatTemperature);
-        preprocessing(fileNameHumidity, dateFormatHumidity);
+//        preprocessing(fileNameTemperature, dateFormatTemperature);
+//        preprocessing(fileNameHumidity, dateFormatHumidity);
         
         
         //Step 2: Read both preprocessed datasets
@@ -57,19 +57,20 @@ public class ReadWriteCSV {
         ArrayList humidityDataSet = readCSV(fileName_Humidity, false);
         
         // Step 3:  Descriptive Statistics
-        double[] temperature = pickAnItemList(temperatureDataSet, 5);
-        double[] humidity = pickAnItemList(humidityDataSet, 5);
-        descriptiveStatistics(temperature, "Temperature");
-        descriptiveStatistics(humidity, "Humidity");
+//        double[] temperature = pickAnItemList(temperatureDataSet, 5);
+//        double[] humidity = pickAnItemList(humidityDataSet, 5);
+//        descriptiveStatistics(temperature, "Temperature");
+//        descriptiveStatistics(humidity, "Humidity");
         
         // Step 4: Inferrential Statistics
-        inferentialStatistics(temperature, humidity);
+//        inferentialStatistics(temperature, humidity);
         
         // Step 5: Regression
-        regression(temperature, humidity);
+//        regression(temperature, humidity);
         
         // Step 6: Machine Learning
-        
+//        TestRBF testRBF = new TestRBF(temperatureDataSet, humidityDataSet);
+        TestRBF.test("src/files/", "testSet.tset", "src/files/", "RBF_In4_H6_Out1_LR0.5_Iter200.nnet");
         
     }
     
