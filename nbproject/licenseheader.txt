@@ -1,0 +1,12 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}This project analyzes the Milano Weather Station Data. 
+${licensePrefix}This data contains the information about the temperature and relative humidity gathered 
+${licensePrefix}during around 2 month in 2013 in Milano - via Lambrate street.
+${licensePrefix}1) We 1) analyze the data in terms of its centrality and shape, 
+${licensePrefix}2) try to find a relationship between temperature and relative humidity using regression, 
+${licensePrefix}and 3) propose a prediction method for this purpose based on artificial neural networks.
+<#if licenseLast??>
+${licenseLast}
+</#if>
