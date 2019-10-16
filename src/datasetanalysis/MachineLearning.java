@@ -1,47 +1,42 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * This project analyzes the Milano Weather Station Data. 
+ * This data contains the information about the temperature and relative humidity gathered 
+ * during around 2 months in 2013 in Milano, Lambrate street.
+ * 1) We 1) analyze the distribution of the data (temperature and relative humidity) 
+ * in terms of its centrality and shape, 
+ * 2) try to find a relationship between temperature and relative humidity using regression, 
+ * and 3) propose a prediction method for this purpose based on artificial neural networks.
  */
 package datasetanalysis;
+
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import org.neuroph.core.NeuralNetwork;
 import org.neuroph.core.data.DataSet;
-import org.neuroph.nnet.MultiLayerPerceptron;
-import org.neuroph.nnet.learning.BackPropagation;
-import org.neuroph.util.TransferFunctionType;
-import java.util.ArrayList;
 import org.neuroph.core.data.DataSetRow;
-import org.neuroph.core.learning.LearningRule;
-import org.neuroph.nnet.learning.DynamicBackPropagation;
-import org.neuroph.nnet.learning.MomentumBackpropagation;
-import org.neuroph.nnet.learning.ResilientPropagation;
-import org.neuroph.util.random.NguyenWidrowRandomizer;
-import org.neuroph.util.random.RangeRandomizer;
-import org.neuroph.nnet.UnsupervisedHebbianNetwork;
-import org.neuroph.core.learning.UnsupervisedLearning;
-import org.neuroph.core.transfer.Ramp;
-import org.neuroph.nnet.learning.UnsupervisedHebbianLearning;
+import org.neuroph.core.input.InputFunction;
+import org.neuroph.core.input.WeightedSum;
+import org.neuroph.core.transfer.Sigmoid;
+import org.neuroph.core.transfer.TransferFunction;
 import org.neuroph.nnet.RBFNetwork;
 import org.neuroph.nnet.learning.RBFLearning;
-import org.neuroph.core.Neuron;
-import org.neuroph.core.input.WeightedSum;
-import org.neuroph.core.input.InputFunction;
-import org.neuroph.core.transfer.TransferFunction;
-import org.neuroph.core.transfer.Gaussian;
-import org.neuroph.core.transfer.Linear;
-import org.neuroph.core.transfer.Sigmoid;
-import org.neuroph.util.Neuroph;
-import org.neuroph.core.Layer;
-import org.neuroph.util.random.NguyenWidrowRandomizer;
+
 /**
- *
- * @author Sadegh Aslanpour
+ *This class is to analyze datasets by machine learnings.
+ * @author aslanpour
  */
-public class TestRBF {
+public class MachineLearning {
     
-    public TestRBF(ArrayList temperatureDataList, ArrayList humidityDataList) throws IOException{
+    /**
+     * Based on the temperature and relative humidity, create a dataset for training
+     * constituting 80% of the entire data and a dataset for testing the neural network performance
+     * constituting the rest of the data (20%). Then, examine different kinds of configurations
+     * for the neural network (RBF) to find the most accurate.
+     * @param temperatureDataList
+     * @param humidityDataList
+     * @throws IOException 
+     */
+    public static void neuralNetworkPreparation(ArrayList temperatureDataList, ArrayList humidityDataList) throws IOException{
         //Merge files and remove unnecesssary fields like key and year
         //input is : month [11,12], day [1, 31], hour [0, 23], and temperature [-3.6, 20.4]
         //output is humidity[15, 96]
@@ -257,10 +252,18 @@ public class TestRBF {
             ReadWriteCSV.writeCSV(networkList, "src/files/nn/", "nn.csv");
         }
         
-        System.out.println("Failde Network = " + failedNetwork);
+        System.out.println("Failed Network = " + failedNetwork);
     }
-    
-    public static void test (String testSetPath, String testSetFileName,
+   
+    /**
+     * Test the neural network and report the error in predictions.
+     * @param testSetPath
+     * @param testSetFileName
+     * @param nnPath
+     * @param nnFileName
+     * @throws IOException 
+     */
+    public static void predict (String testSetPath, String testSetFileName,
                             String nnPath, String nnFileName) throws IOException{
         
         ArrayList dataList = new ArrayList();
@@ -343,13 +346,11 @@ public class TestRBF {
         
     }
     
-    public static double normalizedValue(double input, double minInput, double maxInput) {
+    private static double normalizedValue(double input, double minInput, double maxInput) {
             return (input - minInput) / (maxInput - minInput) * 0.8 + 0.1;
     }
 
-    public static double deNormalizedValue(double input, double minInput, double maxInput) {
+    private static double deNormalizedValue(double input, double minInput, double maxInput) {
             return (input - 0.1) * ( maxInput - minInput) / 0.8 + minInput;
     }
-    
-    
 }
