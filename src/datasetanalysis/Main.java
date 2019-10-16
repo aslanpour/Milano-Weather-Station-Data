@@ -9,7 +9,6 @@
  */
 package datasetanalysis;
 
-import static datasetanalysis.DatasetPreProcessing.preprocessing;
 import static datasetanalysis.ReadWriteCSV.pickAnItemList;
 import static datasetanalysis.ReadWriteCSV.readCSV;
 import java.io.IOException;
@@ -29,39 +28,120 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         // Step 1: preprocessing the datasets
+        preprocessing();
         
+        // To Perform Descriptive Statistics
+        runDescriptiveStatistics();
+        
+        // To Perform Inferential Statistics
+        runInferentialStatistics();
+        
+        // To Perform Regression Analysis
+        runRegression();
+        
+        // To use Machine Learning
+        //First: To assess different neural network configurations
+        runMachineLearning_Preparation();
+        
+        //Second: To predict relative humidity
+        runMachineLearning_Prediction();
+        
+    }
+    
+    /**
+     * Preprocess the datasets (temperature and relative humidity)
+     * and create new CSV files.
+     * @throws IOException 
+     */
+    private static void preprocessing() throws IOException{
         String fileNameTemperature = "mi_meteo_2001.csv";
         String fileNameHumidity = "mi_meteo_2002.csv";
        
         String dateFormatTemperature = "MM/DD/YYYY HH:MM";
         String dateFormatHumidity = "YYYY/MM/DD HH:MM";
        
-//        preprocessing(FILE_PATH, fileNameTemperature, dateFormatTemperature);
-//        preprocessing(FILE_PATH, fileNameHumidity, dateFormatHumidity);
+        DatasetPreProcessing.preprocessing(FILE_PATH, fileNameTemperature, dateFormatTemperature);
+        DatasetPreProcessing.preprocessing(FILE_PATH, fileNameHumidity, dateFormatHumidity);
+    }
+    
+    /**
+     * Call Descriptive Statistics Analysis
+     */
+    private static void runDescriptiveStatistics(){
         
-        
-        //Step 2: Read both preprocessed datasets
+        //read both preprocessed datasets
         //fields: 0:Key, 1:Year, 2:Month, 3:Day, 4:Hour, 5:Target Parameter
         String fileName_Temperature = "preprocessed_mi_meteo_2001.csv";
         String fileName_Humidity = "preprocessed_mi_meteo_2002.csv";
         ArrayList temperatureDataSet = readCSV(FILE_PATH, fileName_Temperature, false);
         ArrayList humidityDataSet = readCSV(FILE_PATH, fileName_Humidity, false);
         
-        // Step 3:  Perform Descriptive Statistics
-//        double[] temperature = pickAnItemList(temperatureDataSet, 5);//picks the 5th items which is temperature
-//        double[] humidity = pickAnItemList(humidityDataSet, 5);//picks the 5th items which is relative humidity
-//        DescriptiveStatistics.analyze(temperature, "Temperature");
-//        DescriptiveStatistics.analyze(humidity, "Humidity");
+        //pick the temperature and humidity only
+        double[] temperature = pickAnItemList(temperatureDataSet, 5);//picks the 5th items which is temperature
+        double[] humidity = pickAnItemList(humidityDataSet, 5);//picks the 5th items which is relative humidity
+        DescriptiveStatistics.analyze(temperature, "Temperature");
+        DescriptiveStatistics.analyze(humidity, "Humidity");
+    }
+    
+    /**
+     * Cal Inferential Statistics Analysis
+     */
+    private static void runInferentialStatistics(){
+        //read both preprocessed datasets
+        //fields: 0:Key, 1:Year, 2:Month, 3:Day, 4:Hour, 5:Target Parameter
+        String fileName_Temperature = "preprocessed_mi_meteo_2001.csv";
+        String fileName_Humidity = "preprocessed_mi_meteo_2002.csv";
+        ArrayList temperatureDataSet = readCSV(FILE_PATH, fileName_Temperature, false);
+        ArrayList humidityDataSet = readCSV(FILE_PATH, fileName_Humidity, false);
         
-        // Step 4: Perform Inferential Statistics
-//        InferentialStatistics.analyze(temperature, humidity);
+        //pick the temperature and humidity only
+        double[] temperature = pickAnItemList(temperatureDataSet, 5);//picks the 5th items which is temperature
+        double[] humidity = pickAnItemList(humidityDataSet, 5);//picks the 5th items which is relative humidity
         
-        // Step 5: Regression Analysis
-//        regression(temperature, humidity);
+        InferentialStatistics.analyze(temperature, humidity);
+    }
+    
+    /**
+     * Call Regression Analysis
+     */
+    private static void runRegression(){
+        //read both preprocessed datasets
+        //fields: 0:Key, 1:Year, 2:Month, 3:Day, 4:Hour, 5:Target Parameter
+        String fileName_Temperature = "preprocessed_mi_meteo_2001.csv";
+        String fileName_Humidity = "preprocessed_mi_meteo_2002.csv";
+        ArrayList temperatureDataSet = readCSV(FILE_PATH, fileName_Temperature, false);
+        ArrayList humidityDataSet = readCSV(FILE_PATH, fileName_Humidity, false);
         
-        // Step 6: Machine Learning
+        //pick the temperature and humidity only
+        double[] temperature = pickAnItemList(temperatureDataSet, 5);//picks the 5th items which is temperature
+        double[] humidity = pickAnItemList(humidityDataSet, 5);//picks the 5th items which is relative humidity
+        
+        Regression.regression(temperature, humidity);
+    }
+    
+    /**
+     * Prepare neural networks by creating, and training some neural networks.
+     * @throws IOException 
+     */
+    private static void runMachineLearning_Preparation() throws IOException{
+        //read both preprocessed datasets
+        //fields: 0:Key, 1:Year, 2:Month, 3:Day, 4:Hour, 5:Target Parameter
+        String fileName_Temperature = "preprocessed_mi_meteo_2001.csv";
+        String fileName_Humidity = "preprocessed_mi_meteo_2002.csv";
+        ArrayList temperatureDataSet = readCSV(FILE_PATH, fileName_Temperature, false);
+        ArrayList humidityDataSet = readCSV(FILE_PATH, fileName_Humidity, false);
+        
+        
         MachineLearning.neuralNetworkPreparation(temperatureDataSet, humidityDataSet);
-        MachineLearning.predict(FILE_PATH, "testSet.tset", FILE_PATH, "RBF_In4_H6_Out1_LR0.5_Iter200.nnet");
         
     }
+    
+    /**
+     * Call Neural Network to predict the relative humidity
+     * @throws IOException 
+     */
+    private static void runMachineLearning_Prediction() throws IOException{
+        MachineLearning.predict(FILE_PATH, "testSet.tset", FILE_PATH, "RBF_In4_H6_Out1_LR0.5_Iter200.nnet");
+    }
+    
 }
