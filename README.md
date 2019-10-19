@@ -7,8 +7,8 @@ _Mohammad Sadegh Aslanpour_
 
 
 Initial datasets are here: https://dandelion.eu/datagems/SpazioDati/milano-weather-station-data/description/   
-
-
+<br />
+<br />
    
    
 Summary: In this study, the weather condition recorded in Milan city by sensors located within the city limit is statistically analyzed. The collected datasets  provides information about meteorological phenomena intensity and type, where the recorded information includes: wind direction, wind speed, temperature, relative humidity, etc. Among them, we selected the last two parameters to perform statistical analysis as—1) descriptive statistics to identify the distribution of each parameter, 2) inferential statistics to identify the type and strength of relationship between them, 3) regression to represent a formula for their relationship, and 4) machine learning to overcome regression limitations. The analysis is carried out in Java language, and the codes are available in GitHub . Our results shows that while the two parameters: temperature and relative humidity have distinguished distribution pattern, our proposed artificial neural network is perfectly capturing the relationship. The process of this analysis is elaborated in the following paragraphs.
